@@ -12,5 +12,5 @@
 	branch = master
 [submodule "csi_models/lyricover"]
 	path = csi_models/lyricover
-	url = https://github.com/DawidRucinski/LyriCover.git
+	url = https://github.com/wojtekBozek/LyriCover.git
 	branch = main

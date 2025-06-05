@@ -4,6 +4,7 @@ coverhunter_config_path: "csi_models/checkpoints/CoverHunter/our_model/config/hp
 coverhunter_checkpoint_dir: "csi_models/checkpoints/CoverHunter/our_model/pt_model"
 
 lyricover_checkpoint_path: "csi_models/checkpoints/lyricover/model.pth"
+lyricover_augmentation_checkpoint_path: "csi_models/checkpoints/lyricover_augmentations/model.pth"
 
 covers80_data_dir: "datasets/covers80/coversongs/covers32k/"
 covers80but10_data_dir: "datasets/covers80but10/coversongs/covers32k/"
@@ -13,5 +14,9 @@ injected_abracadabra_data_dir: "datasets/injected_abracadabra/mix/"
 injected_abracadabra_ground_truth_file: "datasets/injected_abracadabra/injection_list.csv"
 injected_abracadabra_reference_song: "datasets/injected_abracadabra/steve_miller_band+Steve_Miller_Band_Live_+09-Abracadabra.mp3.wav"
 
+datacos_listed: "datasets/datacos/datacos_listed.csv"
+
+distracted_dataset_dir: "datasets/distracted_dataset/"
+distracted_dataset_reference_dir: "datasets/distracted_dataset/reference/"
 remove_checkpoint_dir: "csi_models/checkpoints/remove/model_re-move_lsr_noe_10.pt"
 #remove_config_path: "csi_models/remove/data/lsr_defaults.json"

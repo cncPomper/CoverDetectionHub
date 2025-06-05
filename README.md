@@ -4,13 +4,14 @@
    <img src="img/cover_detection_hub.png" width="60%" alt="Cover Detection Hub">
 </div>
 Authors: Kamil Szczepanik, Dawid Ruciński, Piotr Kitłowski
+Coauthors: Karol Kaspere, Wojciech Bożek, Mateusz Węcławski
 
 ---
 
 ## Project description
 
 
-A framework and “hub” for **music cover identification**, enabling researchers to compare various CSI methods and run experiments through a user-friendly Gradio interface.
+A framework and “hub” for **music cover identification**, enabling researchers to compare various CSI methods and run experiments through a user-friendly Gradio interface. Additionally, new update added generation of covers (instrumental and with lyrics).
 
 ---
 
@@ -42,7 +43,7 @@ A framework and “hub” for **music cover identification**, enabling researche
 2. Create and Activate a Virtual Environment (optional but recommended):
    ```bash
    # Create a virtual environment (Linux/macOS)
-   python -m venv venv
+   python -m venv venv # we recommend using python 3.10
    source venv/bin/activate
 
    # On Windows
@@ -67,10 +68,12 @@ The config has been tested on Linux and Windows machines with CUDA. Please note 
 The checkpoints are stored [here](https://drive.google.com/drive/folders/1YMCLLi1HVybz_knO3yW-io0ul3AK_Ku5?usp=sharing).
 ## Project Overview
 
-This project is part of a Music Information Retrieval (MIR) course. We developed a hub for cover detection, providing:
+This project is part of a Music Information Retrieval (MIR) course. We developed a hub for cover detection and generation, providing:
 
 - A unified interface to compare different cover detection models.
+- A submodule with cover generation (instrumental and with lyrics)
 - Experiments for evaluating effectiveness on known cover-song datasets.
+- Experiments with augmentations for lyricover model
 - A fast, user-friendly GUI using Gradio.
 
 ### Original Scope
@@ -85,6 +88,9 @@ Main technologies in use:
 - **Librosa**: Used for audio loading and some feature extraction (MFCC, spectral centroid) in the simpler comparison methods.
 - **venv** (or other tool): For making the project portable in an easy way
 - **OpenAI Whisper**: Used by Lyricover to transcribe lyrics and measure similarity in lyric space.
+- **demucs**: A source‐separation library that uses deep convolutional networks to isolate vocals and instruments from mixed audio.
+- **MusicGen**: A generative model from Meta’s Audiocraft that produces high-quality instrumental music conditioned on input audio or prompts.
+- **Audiomentations**: A Python library for applying real‐time, on‐the‐fly audio data augmentation (noise, pitch shift, time stretch, etc.) to improve model robustness during training.
 
 Other programs that are needed to run:
 - [**ffmpeg**](https://github.com/FFmpeg/FFmpeg): Used for samples validation and simple preprocessing
@@ -105,7 +111,7 @@ We currently have 3 main cover-detection models:
 - Inspired by the paper "The Words Remain the Same: Cover Detection with Lyrics Transcription".
 - It is our **own implementation** joining text extraction using OpenAI Whisper with n-gram representation and spectral features.
 - The result is obtained via a simple neural network that joins the predictions.
-- 
+
 Each of these models outputs a similarity score for a given pair of audio files. A threshold then decides if two songs are considered “covers.”
 
 4. Re-move:
@@ -124,14 +130,20 @@ These can be used to compare two audio files based on feature similarity (e.g., 
 ## Available Datasets
 The hub includes references to the following datasets:
 
-1. Covers80
+1. Covers80:
 A standard collection used in many cover-song identification studies.
 
-2. Covers80but10
+1. Covers80but10:
 A smaller variant with only 10 songs (for quick testing).
 
-3. Injected Abracadabra
+1. Injected Abracadabra
 A synthetic dataset where a portion of “Abracadabra” by Steve Miller Band is injected into other audio samples, as described in [Batlle-Roca et al.](https://arxiv.org/pdf/2407.14364).
+
+1. Distracted dataset
+A synthetic dataset where during the original song there is an another song playing in background.
+
+1. Da-tacos dataset
+Dataset for covers identification. https://github.com/MTG/da-tacos
 
 **Note: The actual training of ByteCover, CoverHunter, Remove and Lyricover was performed on SHS100k, using a university server with GPU machines. The Covers80-related datasets are primarily for testing and demonstration.**
 
@@ -167,6 +179,8 @@ A browser tab should open with two tabs:
    - Based on the partial injection method from [Batlle-Roca et al.](https://arxiv.org/pdf/2407.14364).
   - We inject a segment of an original piece (Abracadabra) into other tracks to create partial covers, then measure how well each model detects the covers.
 2. Covers80 evaluation - the samples were compared on a "pairwise" basis, i.e., pairs of tracks were selected either from the same groups (in which case they were considered covers) or from different groups (in which case they were classified as non-covers).
+3. Synthetic Distracted Dataset
+   - Our own implementation of new dataset. We are adding a background song to original one. 
 
 ## Unit Tests
 
@@ -211,6 +225,14 @@ We maintain a `tests/` directory with `pytest` test files. Below is a summary of
 | [ZAIKS dataset](https://zaiks.org.pl/) | It's a friendly organization in Poland. The organization will provide a music dataset for testing purposes - these will probably be Polish songs and their famous cover versions. |
 
 
+### Augmentations and further research - looking for methods used in CSI for further development of the project
+| **Paper**                | **Notes**                                                                 |
+|-----------------------------------|-----------------------------------------------------------------------------|
+| [Training audio transformers for cover song identification](https://asmp-eurasipjournals.springeropen.com/articles/10.1186/s13636-023-00297-4#Sec12) | In this paper data augmentations are described in detail, providing an example that we can base our work on. Augmentations conducted by the research team include: randomly changing pitch dimension beetwen 0 to 11 bins, modifing tempo variation, duplication or removal of frames, as well as truncating some parts of the audio signal. |
+| [WideResNet with Joint Representation Learning and Data Augmentation for Cover Song Identification](https://www.isca-archive.org/interspeech_2022/hu22f_interspeech.pdf) | In this paper few more augmentation techniques are presented. One of method is implemented by cropping input features with varriant lengths in order to accommodate input feature withf different length, another is based on masking vertical and horizontal bins. Those are called frequency and time masking.  |
+|[A SEMI-SUPERVISED DEEP LEARNING APPROACH TO DATASET COLLECTION FOR QUERY-BY-HUMMING TASK](https://archives.ismir.net/ismir2023/paper/000077.pdf) | While this paper focuses on MIR methods used for Query-by-humming task (recognizing music piece by humming its part) and development of dataset designed for that problem, it is treated as a specialization of CSI problem by the authors. As such it provides interesting read that may be beneficial in terms of finding new experiments and refinements for our project. Besides it presents another set of augmentations and experiments that were conducted by reserchers and as such can be treated as yet another inspiration in further development. |
+
+
 ## Performance Metrics
 
 The selection of metrics is based on Mirex Cover Song Identification Contest.
@@ -225,6 +247,7 @@ The selection of metrics is based on Mirex Cover Song Identification Contest.
 | **Model: ByteCover**     | 0.51435                     | 0.70000                         | 1.00000                                       |
 | **MFCC**                 | 0.24015                     | 0.30000                         | 3.00000                                       |
 | **Spectral Centroid**    | 0.24159                     | 0.30000                         | 3.00000                                       |
+| **Model: Augmented Lyricover**    | 0.88648                     | 0.90000                         | 1.00000                                     |
 
 ### Dataset: Covers80 
 
@@ -236,69 +259,154 @@ The selection of metrics is based on Mirex Cover Song Identification Contest.
 | **Model: ByteCover**     | 0.52172                     | 0.07927                         | 14.78049                                      |
 | **MFCC**                 | 0.24015                     | 0.30000                         | 3.00000                                       |
 | **Spectral Centroid**    | 0.04352                     | 0.00793                         | 76.80488                                      |
+| **Model: Augmented Lyricover**    | 0.80529                    | 0.09939                        | 4.98780                                      |
+
+### Dataset: Distracted Dataset 
+
+| Dataset / Model          | Mean Average Precision (mAP) | Precision at 10 (P@10) / mP@10 | Mean Rank of First Correct Cover (MR1 / mMR1) |
+|--------------------------|------------------------------|---------------------------------|-----------------------------------------------|
+| **Model: re-move**       | **0.32454**                 | 0.07349                         | 19.48                                      |
+| **Model: Lyricover**     | 0.25801                     | 0.05749                        | 44.14                                      |
+| **Model: Augmented Lyricover**     | 0.26876                    | 0.05299                        | 41.69                                      |
+| **Model: CoverHunter**   | 0.27697                     | 0.05799                         | 28.77                                       |
+| **Model: ByteCover**     | 0.16761                     | 0.03299                         | 47.42                                         |
+| **MFCC**                 | 0.04621                     | 0.01200                         | 93.935                                       |
+
+## Tests on bigger subset of shs100k dataset
+
+### Dataset: Covers80 
+
+| Dataset / Model          | Mean Average Precision (mAP) | Precision at 10 (P@10) / mP@10 | Mean Rank of First Correct Cover (MR1 / mMR1) |
+|--------------------------|------------------------------|---------------------------------|-----------------------------------------------|
+| **Model: Lyricover**     | 0.83425                     | 0.09939                         | 7.41463                                       |
+| **Model: Lyricover on bigger dataset (8k)**  | 0.77214                    | 0.07215                        | 5.53153                                     |
+| **Model: Lyricover on bigger dataset (4k)**  | 0.79251                    | 0.07984                    | 6.21521
+| **Model: Lyricover on bigger dataset (2k)**  | 0.81652                  | 0.08812                        | 6.95124    
+
+![alt text](./datasets/shs100k/image.png)
+
+## Why Larger Dataset Didn’t Improve Lyricover
+
+- **Data Quality vs. Quantity**  
+  Additional examples likely introduced noise (mismatched genres, poor recordings) that diluted the model’s signal.
+
+- **Limited Feature Space**  
+  Using only tonal cosine similarity and basic lyric cosine similarity cannot capture nuanced cover relationships as data diversity grows.
+
+- **Model Capacity Mismatch**  
+  A small 3-layer NN may underfit on more varied data unless re-architected or re-tuned (learning rate, regularization).
+
+- **Imbalanced Sampling**  
+  Adding many negatives without balancing positives can push down precision and mAP, even if overall accuracy remains stable.
 
 ---
 
-## Project schedule
-### W1 (14-20.10.2024)
+## Concise Future Directions
 
-- [x] Gathering literature
-- [x] preparing design proposal
-- [x] tools selection
-- [x] selection of datasets
+1. **Richer Features**  
+   - Use multi-scale tonal embeddings (e.g., short-term and long-term chroma).  
+   - Replace raw lyric cosine with contextual text embeddings (e.g., Sentence-BERT).
 
-### W2 (21-27.10.2024)
+2. **Stronger Models & Losses**  
+   - Adopt a dual-branch network: one branch for audio embeddings (e.g., small CNN on mel spectrogram), another for lyric embeddings; fuse before classification.  
+   - Switch to contrastive or triplet loss so covers cluster in embedding space, boosting mAP and P@10 directly.
 
-- [x] Preparing the environment
-- [x] choice for the models
-- [x] initial dataset preprocessing
+3. **Data Curation & Sampling**  
+   - Filter out noisy/mislabeled pairs automatically (e.g., check vocal separation confidence, validate lyric alignment).  
+   - Ensure balanced positive vs. hard-negative sampling (hard negatives are non-covers with similar chords or themes).
 
-### W3-W4 (28.10-10.11.2024)
+4. **Transfer Learning & Pretrained Embeddings**  
+   - Leverage pretrained audio models (e.g., OpenL3, VGGish) for richer audio features.  
+   - Pretrain a small multimodal network (audio + lyrics) on a larger external covers dataset, then fine-tune on Covers80.
 
-- [x] Implementation of the first functional prototype
-- [x] including training at least one model
-- [x] minimal GUI
+5. **Rank-Aware Objectives**  
+   - Optimize a differentiable ranking loss (e.g., soft mAP) to directly improve P@10.  
+   - Use margin ranking loss to minimize the mean rank of the first correct cover (MR1).
 
-### W5-W6 (11-24.11.2024)
+## Lyricover with augmentations
 
-- [x] First results evaluation
-- [x] implementing improvements
-- [x] training
-- [x] adding subsequent models
-- [x] scraping SHS100K dataset
+As for 2025L WIMU semester course augmentations experimentations were performed. The Lyricover Model was enhanced with custom DataLoader, that allows for extracting features each epoch, robusting augmentation pipeline, assuring that each epoch training set differs a little bit.
 
-### W7 (25.11-1.12.2024)
+Furthermore W&B framework was implemented into the code, allowing for more robust experimentation tracking, saving model configuration, logging events and weights of the model after each run. 
 
-- [x] Automated tests design
-- [x] training of remaining models
+We conducted several experiments, testing the dataset with different number of augmentations, measuring their effect on the model performence. Our initial strategyu was to perform fine tuning with augmentations on new training data and compare the effects of new learning. However due to taking too much epochs and too large of a learning rate we overfitted the model in initial experimentation phase. After lowering number of epochs and limiting learining rate we conducted further experimentations on larger pool of augmentations. 
 
-### W8-W9 (02-15.12.2024)
+## Augmented Lyricover Evaluation
 
-- [x] Evaluation of the results
-- [x] improving GUI
-- [x] re-training the models if necessary
 
-### W10-W12 (16.12.2024-05.01.2025)
+Here we present effects of the augmentations on the model we received after experiments with augmentations.
 
-- [x] Working on the final presentation
-- [x] tests
-- [x] gathering final results, Bożenarodzeniowy chill (optional)
+For example on test dataset after training our model received following score:
 
-### W13 (06-13.01.2025)
+| Metric     | Value   |
+|------------|---------|
+| Accuracy   | 0.8650  |
+| Precision  | 1.0000  |
+| Recall     | 0.7286  |
+| F1 Score   | 0.8430  |
 
-- [x] Final results evaluation
-- [ ] preparation of the paper (?)
+While original model received:
 
-### W14 (13-19.01.2025)
+| Metric     | Value   |
+|------------|---------|
+| Accuracy   | 0.8725  |
+| Precision  | 0.8524  |
+| Recall     | 0.8995  |
+| F1 Score   | 0.8753  |
 
-:tada: Public project presentation :tada:
+Another evaluation was conducted on dataset which was augmented with minor augmentations (pitch shift, time stretch and clipping_distortion). Our augmented model metrics are presented below:
+
+| Metric     | Value   |
+|------------|---------|
+| Accuracy   | 0.7788  |
+| Precision  | 1.0000  |
+| Recall     | 0.5589  |
+| F1 Score   | 0.7171  |
+
+and original model for comparisson:
+
+| Metric     | Value   |
+|------------|---------|
+| Accuracy   | 0.7838  |
+| Precision  | 0.9075  |
+| Recall     | 0.6331  |
+| F1 Score   | 0.7458  |
+
+
+Judging by the F1 score, the overall performance of the model was lowered.
+On datasets available for evaluation on CoverDetectionHub as well as our new Test called DistractedDataset (where clean audio is sompared with it's cover, where additional audio plays constantly in the background of cover song, momentarly increasing it's volume to match the volume of first song) our model performed slightly better on Inejcted Abracadabra set. It was also better in general in terms of Mean Avarage Precision and Mean rank of first relevant item.
+
+Lyricover trained with augmentations
+| Dataset               | mAP     | mP@10   | mMR1   |
+|-----------------------|---------|---------|--------|
+| Injected Abracadabra  | 0.88648 | 0.90000 | 1.00000 |
+| Covers80              | 0.80529 | 0.09939 | 4.98780 |
+| Distracted Dataset    | 0.26877 | 0.05300 | 41.69000 |
+
+Original Lyricover
+| Dataset               | mAP     | mP@10   | mMR1    |
+|-----------------------|---------|---------|---------|
+| Injected Abracadabra  | 0.82029 | 0.90000 | 1.00000 |
+| Covers80              | 0.83425 | 0.09939 | 7.41463 |
+| Distracted Dataset    | 0.25801 | 0.05750 | 44.14000 |
+
+For more information about this experiment: 
+https://github.com/wojtekBozek/LyriCover.git
 
 ## Future challenges
-- obtaining Da-Tacos dataset and possibly perform training and evaluation on it
-- improving the [LyriCover](https://github.com/DawidRucinski/LyriCover) model for more sophisticated audio features exctraction; training on a larger subset of SHS100k after improving performance of the model
-- possible co-operation with [ZAIKS](https://zaiks.org.pl/) to form a new dataset and deploy the solution
-- performing more experiments, similar to "Injected Abracadabra" or others found in the literature
-- augmentations are a very interesting field of experiments
+- better extracting similarity from features in Da-Tacos dataset. Arrays are long 12x2000, calculating median, average etc. It's not working (in some arrays there is a lot of 0 (or near to 0) that have bad impact at those values). We also tried DWT and similarity matrix. Similarity matrix could be a good solution, but it needs a lot of RAM and disk space - probably needs some optimizations. (features: croma_cens, crema, hpcp, mfcc_htk)
 - currently, model Re-Move uses `essentia` package, which unavailable on Windows. This makes the whole app runnable only on unix operating systems. It would be advisable to make own implementation of the necessary methods from this package so that it app is runnable on all systems.
+- the audio in the generated covers can sound somewhat robotic. It would be beneficial to work on generating a more natural-sounding voice, for example by leveraging the Retrieval-based Voice Conversion WebUI project: https://github.com/RVC-Project/Retrieval-based-Voice-Conversion-WebUI
+- we recomend conducting further experimenations on sets of augmentations, but with lyrics generated each time.
+- another possible addition would be exploring torchaudio library and whisper model parraller options in order to make feature extraction more robust. (lyricover)
 
+
+
+## Useful Links
+
+ - [Checkpoints and datasets](https://drive.google.com/drive/folders/19fAW7Nmk4CwncsfHQkrAYQ0fSFgcEHsw) - dataasets and checkopints
+ - [augmented lyricover model checkpoint](https://drive.google.com/file/d/10UvcPfOJhAIfoUp1jze8jl-7V6ysD7oU/view?usp=drive_link)
+ - [Distracted Dataset](https://drive.google.com/file/d/134V7bc82_P-wG4jMNEoE08HbsImQQtVD/view?usp=drive_link)
+
+ 
 The logo has been designed using DALL-E model.
